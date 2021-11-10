@@ -1,13 +1,11 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in MyungJi University 
- */
-
 package framework;
 
-import java.rmi.Naming;
-
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Iterator;
+import java.util.Objects;
 import java.util.Vector;
 
 public class RMIEventBusImpl extends UnicastRemoteObject implements RMIEventBus {
@@ -16,34 +14,45 @@ public class RMIEventBusImpl extends UnicastRemoteObject implements RMIEventBus 
 
 	public RMIEventBusImpl() throws RemoteException {
 		super();
-		eventQueueList = new Vector<EventQueue>(15, 1);
+		eventQueueList = new Vector<>(15, 1);
 	}
-	public static void main(String args[]) {
+	public static void main(String[] args) {
 		try {
 			RMIEventBusImpl eventBus = new RMIEventBusImpl();
-	      		Naming.bind("EventBus", eventBus);
-	      		System.out.println("Event Bus is running now...");
+			Registry registry = LocateRegistry.createRegistry(8080);
+			registry.bind("EventBus", eventBus);
+//			Naming.bind("EventBus", eventBus);
+			System.out.println("Event Bus is running now...");
 		} catch (Exception e) {
 			System.out.println("Event bus startup error: " + e);
 		}
 		
 	}
+
+	@Override
 	synchronized public long register() throws RemoteException {
 		EventQueue newEventQueue = new EventQueue();
 		eventQueueList.add( newEventQueue );
 		System.out.println("Component (ID:"+ newEventQueue.getId() + ") is registered...");
 		return newEventQueue.getId();
 	}
+
+	@Override
 	synchronized public void unRegister(long id) throws RemoteException {
-		EventQueue eventQueue;
-		for ( int i = 0; i < eventQueueList.size(); i++ ) {
-			eventQueue =  eventQueueList.get(i);			
-			if (eventQueue.getId() == id) {
-				eventQueue = eventQueueList.remove(i);
+
+		Iterator<EventQueue> iterator = eventQueueList.iterator();
+		while (iterator.hasNext()) {
+			EventQueue eventQueue = iterator.next();
+			if (Objects.equals(eventQueue.getId(), id)) {
+				iterator.remove();
+//				eventQueueList.remove(eventQueue);		// BUG: ConcurrentModificationException
 				System.out.println("Component (ID:"+ id + ") is unregistered...");
 			}
 		}
+
 	}
+
+	@Override
 	synchronized public void sendEvent(Event sentEvent) throws RemoteException {
 		EventQueue eventQueue;
 		for ( int i = 0; i < eventQueueList.size(); i++ ) {
@@ -53,17 +62,18 @@ public class RMIEventBusImpl extends UnicastRemoteObject implements RMIEventBus 
 		}
 		System.out.println("Event Inforamtion(ID: "+sentEvent.getEventId()+", Message: "+sentEvent.getMessage()+")");
 	}
-	synchronized public EventQueue getEventQueue(long id) throws RemoteException {
-		EventQueue originalQueue = null; 
+
+	@Override
+	synchronized public EventQueue receiveEventQueue(long senderId) throws RemoteException {
 		EventQueue copiedQueue =  null;
-		for ( int i = 0; i < eventQueueList.size(); i++ ) {
-			originalQueue =  eventQueueList.get(i);
-			if (originalQueue.getId() == id) {
-				originalQueue = eventQueueList.get(i);
-				copiedQueue = originalQueue.getCopy();
-				originalQueue.clearEventQueue();
+
+		for (EventQueue eventQueue : eventQueueList) {
+			if (Objects.equals(eventQueue.getId(), senderId)) {
+				copiedQueue = eventQueue.getCopy();
+				eventQueue.clearEventQueue();
 			}
 		}
+
 		return copiedQueue;
 	}
 }

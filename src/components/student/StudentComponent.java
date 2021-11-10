@@ -1,21 +1,16 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in MyungJi University 
- */
-
 package components.student;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class StudentComponent {
 	protected ArrayList<Student> vStudent;
 	
-	public StudentComponent(String sStudentFileName) throws FileNotFoundException, IOException {
-		BufferedReader bufferedReader = new BufferedReader(new FileReader(sStudentFileName));
-		this.vStudent = new ArrayList<Student>();
+	public StudentComponent(String sStudentFileName) throws IOException {
+		BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(Objects.requireNonNull(this.getClass().getResourceAsStream(sStudentFileName))));
+//		BufferedReader bufferedReader = new BufferedReader(new FileReader(sStudentFileName));
+		this.vStudent = new ArrayList<>();
 		while (bufferedReader.ready()) {
 			String stuInfo = bufferedReader.readLine();
 			if (!stuInfo.equals("")) this.vStudent.add(new Student(stuInfo));
@@ -29,8 +24,8 @@ public class StudentComponent {
 		this.vStudent = vStudent;
 	}
 	public boolean isRegisteredStudent(String sSID) {
-		for (int i = 0; i < this.vStudent.size(); i++) {
-			if (((Student) this.vStudent.get(i)).match(sSID)) return true;
+		for (Student student : this.vStudent) {
+			if (( student).match(sSID)) return true;
 		}
 		return false;
 	}

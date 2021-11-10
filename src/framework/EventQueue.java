@@ -1,7 +1,3 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in MyungJi University 
- */
-
 package framework;
 
 import java.io.Serializable;
@@ -15,7 +11,7 @@ public class EventQueue implements Serializable
 	private long componentId;
 
 	public EventQueue() {
-		eventList = new Vector<Event> (15, 1);
+		eventList = new Vector<> (15, 1);
 		componentId = Calendar.getInstance().getTimeInMillis();
 	}
 	public long getId()	{
@@ -27,7 +23,7 @@ public class EventQueue implements Serializable
 	public void addEvent(Event newEvent) {
 		eventList.add(newEvent);
 	}
-	public Event getEvent() {
+	public Event pollEvent() {
 		Event event = null;
 		if (eventList.size() > 0) {
 			event = eventList.get(0);

@@ -1,27 +1,25 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in MyungJi University 
- */
-
 package components.student;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
 
 import framework.Event;
 import framework.EventId;
 import framework.EventQueue;
 import framework.RMIEventBus;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.rmi.NotBoundException;
+import java.rmi.registry.LocateRegistry;
+
 public class StudentMain {
-	public static void main(String args[]) throws FileNotFoundException, IOException, NotBoundException {
-		RMIEventBus eventBus = (RMIEventBus) Naming.lookup("EventBus");
+	public static void main(String[] args) throws IOException, NotBoundException {
+		RMIEventBus eventBus = (RMIEventBus) LocateRegistry.getRegistry(8080).lookup("EventBus");
+//		RMIEventBus eventBus = (RMIEventBus) Naming.lookup("EventBus");
 		long componentId = eventBus.register();
 		System.out.println("** StudentMain(ID:" + componentId + ") is successfully registered. \n");
 
+		RMIEventBus.addShutDownHook(eventBus, componentId);
+
 		StudentComponent studentsList = new StudentComponent("Students.txt");
-		Event event = null;
 		boolean done = false;
 		
 		while (!done) {
@@ -31,9 +29,9 @@ public class StudentMain {
 				e.printStackTrace();
 			}
 
-			EventQueue eventQueue = eventBus.getEventQueue(componentId);
+			EventQueue eventQueue = eventBus.receiveEventQueue(componentId);
 			for (int i = 0; i < eventQueue.getSize(); i++) {
-				event = eventQueue.getEvent();
+				Event event = eventQueue.pollEvent();
 				switch (event.getEventId()) {
 				case ListStudents:
 					printLogEvent("Get", event);
@@ -65,11 +63,11 @@ public class StudentMain {
 	}
 
 	private static String makeStudentList(StudentComponent studentsList) {
-		String returnString = "";
+		StringBuilder returnString = new StringBuilder();
 		for (int j = 0; j < studentsList.vStudent.size(); j++) {
-			returnString += studentsList.getStudentList().get(j).getString() + "\n";
+			returnString.append(studentsList.getStudentList().get(j).getString()).append("\n");
 		}
-		return returnString;
+		return returnString.toString();
 	}
 
 	private static void printLogEvent(String comment, Event event) {

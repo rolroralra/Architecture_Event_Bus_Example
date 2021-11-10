@@ -1,7 +1,8 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in MyungJi University 
- */
 package components.client.input;
+
+import framework.Event;
+import framework.EventId;
+import framework.RMIEventBus;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,17 +11,19 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-
-import framework.Event;
-import framework.EventId;
-import framework.RMIEventBus;
+import java.rmi.registry.LocateRegistry;
 
 public class ClientInputMain {
-	public static void main(String[] args) throws MalformedURLException, RemoteException, NotBoundException {
-		RMIEventBus eventBus = (RMIEventBus) Naming.lookup("EventBus");
+	public static void main(String[] args) throws RemoteException, NotBoundException {
+		RMIEventBus eventBus = (RMIEventBus) LocateRegistry.getRegistry(8080).lookup("EventBus");
+//		RMIEventBus eventBus = (RMIEventBus) Naming.lookup("EventBus");
 		long componentId = eventBus.register();
 		System.out.println("** ClientInputMain(ID:" + componentId + ") is successfully registered. \n");
-		
+
+
+		RMIEventBus.addShutDownHook(eventBus, componentId);
+
+
 		boolean done = false;
 		while (!done) {
 			writeMenu();
@@ -57,9 +60,8 @@ public class ClientInputMain {
 		}
 	}
 	private static String makeStudentInfo() throws IOException {
-		String userInput = "";
 		System.out.println("\nEnter student ID and press return (Ex. 20131234)>> ");
-		userInput = new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
+		String userInput = new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
 		System.out.println("\nEnter family name and press return (Ex. Hong)>> ");
 		userInput += " " + new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
 		System.out.println("\nEnter first name and press return (Ex. Gildong)>> ");
@@ -74,9 +76,8 @@ public class ClientInputMain {
 		return userInput;
 	}
 	private static String makeCourseInfo() throws IOException {
-		String userInput = "";
 		System.out.println("\nEnter course ID and press return (Ex. 12345)>> ");
-		userInput = new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
+		String userInput = new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
 		System.out.println("\nEnter the family name of the instructor and press return (Ex. Hong)>> ");
 		userInput += " " + new BufferedReader(new InputStreamReader(System.in)).readLine().trim();
 		System.out.println(

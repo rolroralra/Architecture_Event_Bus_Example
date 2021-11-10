@@ -1,20 +1,16 @@
-/**
- * Copyright(c) 2021 All rights reserved by Jungho Kim in Myungji University
- */
 package components.course;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class CourseComponent {
     protected ArrayList<Course> vCourse;
 
-    public CourseComponent(String sCourseFileName) throws FileNotFoundException, IOException { 	
-        BufferedReader bufferedReader  = new BufferedReader(new FileReader(sCourseFileName));       
-        this.vCourse  = new ArrayList<Course>();
+    public CourseComponent(String sCourseFileName) throws IOException {
+        BufferedReader bufferedReader  = new BufferedReader(new InputStreamReader(Objects.requireNonNull(this.getClass().getResourceAsStream(sCourseFileName))));
+//        BufferedReader bufferedReader  = new BufferedReader(new FileReader(sCourseFileName));
+        this.vCourse  = new ArrayList<>();
         while (bufferedReader.ready()) {
             String courseInfo = bufferedReader.readLine();
             if(!courseInfo.equals("")) this.vCourse.add(new Course(courseInfo));
@@ -25,8 +21,8 @@ public class CourseComponent {
         return this.vCourse;
     }
     public boolean isRegisteredCourse(String courseId) {
-        for (int i = 0; i < this.vCourse.size(); i++) {
-            if(((Course) this.vCourse.get(i)).match(courseId)) return true;
+        for (Course course : this.vCourse) {
+            if (course.match(courseId)) return true;
         }
         return false;
     }
